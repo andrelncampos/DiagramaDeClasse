@@ -1,0 +1,65 @@
+@using DiagramaDeClasse.Modelos
+@inject IJSRuntime JSRuntime
+@inject ServicoArmazenamentoBase ServicoArmazenamento
+
+<textarea @bind="_codigoLocal"
+          @oninput="OnInputChanged"
+          @onkeydown="OnKeyDown"
+          id="@_editorId"
+          class="mud-input-root mud-input-root-outlined mud-input-root-multiline"
+          placeholder="classDiagram&#10;    ClasseA --> ClasseB"
+          rows="30"
+          style="width: 100%; font-family: 'Courier New', monospace; padding: 12px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; background: transparent;">
+</textarea>
+
+@code {
+    [Parameter] public string Codigo { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> CodigoChanged { get; set; }
+    
+    private string _codigoLocal = string.Empty;
+    private readonly string _editorId = $"editor-{Guid.NewGuid():N}";
+    private Timer? _debounceTimer;
+    
+    protected override void OnParametersSet()
+    {
+        if (_codigoLocal != Codigo)
+        {
+            _codigoLocal = Codigo;
+        }
+    }
+    
+    private void OnInputChanged(ChangeEventArgs e)
+    {
+        _codigoLocal = e.Value?.ToString() ?? string.Empty;
+        
+        // Debounce: renderiza e salva após 2s sem digitação
+        _debounceTimer?.Dispose();
+        _debounceTimer = new Timer(async _ => 
+        {
+            await InvokeAsync(async () => 
+            {
+                await CodigoChanged.InvokeAsync(_codigoLocal);
+                
+                // Salvamento automático
+                var diagrama = new DiagramaMermaid();
+                diagrama.AtualizarCodigo(_codigoLocal);
+                await ServicoArmazenamento.SalvarDiagramaAsync(diagrama);
+                
+                StateHasChanged();
+            });
+        }, null, 2000, Timeout.Infinite);
+    }
+    
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Tab")
+        {
+            await JSRuntime.InvokeVoidAsync("insertTab", _editorId);
+        }
+    }
+    
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
+    }
+}

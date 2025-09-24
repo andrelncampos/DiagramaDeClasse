@@ -1,0 +1,145 @@
+@using DiagramaDeClasse.Modelos
+@using DiagramaDeClasse.Servicos
+@inject ServicoArmazenamentoBase ServicoArmazenamento
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+
+<MudPaper Class="pa-3 mb-4" Elevation="2">
+    <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+
+        <MudButton Variant="Variant.Text" 
+                   Color="Color.Info"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="LimparDiagrama"
+                   Size="Size.Medium">
+            Exemplo
+        </MudButton>
+        <MudDivider Vertical="true" FlexItem="true" />
+        <MudButton Variant="Variant.Text" 
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.FileDownload"
+                   OnClick="ExportarArquivo"
+                   Size="Size.Medium">
+            Exportar
+        </MudButton>
+        <MudButton Variant="Variant.Text" 
+                   Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.FileUpload"
+                   OnClick="ImportarArquivo"
+                   Size="Size.Medium">
+            Importar
+        </MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Text" 
+                   Color="Color.Info"
+                   StartIcon="@Icons.Material.Filled.Help"
+                   OnClick="AbrirHelp"
+                   Size="Size.Medium">
+            Help
+        </MudButton>
+        <MudChip T="string" 
+                 Icon="@Icons.Material.Filled.CloudDone" 
+                 Color="Color.Success" 
+                 Size="Size.Small">
+            Salvamento Automático
+        </MudChip>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public DiagramaMermaid Diagrama { get; set; } = new();
+    [Parameter] public EventCallback<DiagramaMermaid> OnDiagramaCarregado { get; set; }
+
+    private async Task LimparDiagrama()
+    {
+        var diagramaLimpo = new DiagramaMermaid();
+        var codigoExemplo = @"classDiagram
+    direction LR
+
+    class Veiculo {
+      #String marca
+      #String modelo
+      +acelerar()
+      +frear()
+    }
+
+    class Motor {
+      -int potenciaHP
+    }
+
+    class Carro {
+      -int numeroDePortas
+      +abrirPortaMalas()
+    }
+    
+    class Motocicleta {
+      -int cilindradas
+      +empinar()
+    }
+
+    class Motorista {
+      -String nome
+      -String cnh
+    }
+
+    class Garagem {
+        -String endereco
+    }
+
+    Veiculo <|-- Carro
+    Veiculo <|-- Motocicleta
+    Veiculo ""1"" *-- ""1"" Motor : possui
+    Motorista ""1"" --> ""0..*"" Carro : dirige
+    Garagem ""1"" o-- ""0..*"" Carro : abriga";
+        diagramaLimpo.AtualizarCodigo(codigoExemplo);
+        await OnDiagramaCarregado.InvokeAsync(diagramaLimpo);
+        Snackbar.Add("Exemplo carregado!", Severity.Normal);
+    }
+    
+    private async Task ExportarArquivo()
+    {
+        var nomeArquivo = await SolicitarNomeArquivo();
+        if (!string.IsNullOrEmpty(nomeArquivo))
+        {
+            await JSRuntime.InvokeVoidAsync("exportDcl", Diagrama.Codigo, nomeArquivo);
+            Snackbar.Add($"Arquivo {nomeArquivo}.dcl exportado!", Severity.Success);
+        }
+    }
+    
+    private async Task ImportarArquivo()
+    {
+        try
+        {
+            var conteudo = await JSRuntime.InvokeAsync<string>("importDcl");
+            if (!string.IsNullOrEmpty(conteudo))
+            {
+                var diagramaImportado = new DiagramaMermaid();
+                diagramaImportado.AtualizarCodigo(conteudo);
+                await OnDiagramaCarregado.InvokeAsync(diagramaImportado);
+                Snackbar.Add("Arquivo importado com sucesso!", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao importar arquivo: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task<string> SolicitarNomeArquivo()
+    {
+        var dialog = await DialogService.ShowAsync<DialogoNomeArquivo>("Exportar Diagrama");
+        var result = await dialog.Result;
+        
+        return result.Canceled ? string.Empty : result.Data?.ToString() ?? string.Empty;
+    }
+    
+    private async Task AbrirHelp()
+    {
+        await DialogService.ShowAsync<DialogoHelp>("Como usar Diagramas de Classe", new DialogOptions
+        {
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true
+        });
+    }
+}

@@ -1,0 +1,50 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="_tema" IsDarkMode="_modoEscuro" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="Icons.Material.Filled.AccountTree" Color="Color.Inherit" Class="mr-3" />
+        <MudText Typo="Typo.h5">Editor de Diagramas de Classe</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_modoEscuro ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
+                       Color="Color.Inherit" 
+                       OnClick="AlternarTema" />
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _modoEscuro = false;
+    private MudTheme _tema => new()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = Colors.Blue.Default,
+            Secondary = Colors.Green.Accent4,
+            AppbarBackground = Colors.Blue.Default,
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Lighten1,
+            Secondary = Colors.Green.Accent4,
+            AppbarBackground = Colors.Gray.Darken4,
+            Surface = Colors.Gray.Darken4,
+            Background = Colors.Gray.Darken3,
+            TextPrimary = Colors.Shades.White,
+            TextSecondary = Colors.Gray.Lighten1
+        }
+    };
+
+    private void AlternarTema()
+    {
+        _modoEscuro = !_modoEscuro;
+    }
+}

@@ -1,0 +1,112 @@
+@using DiagramaDeClasse.Servicos
+@inject ServicoRenderizacaoMermaid ServicoRenderizacao
+@inject IJSRuntime JSRuntime
+
+<MudPaper Class="pa-4" Style="min-height: 400px; position: relative;" Elevation="1">
+    <!-- Controles de Zoom -->
+    <div style="position: absolute; top: 8px; right: 8px; z-index: 10; display: flex; gap: 4px;">
+        <MudIconButton Icon="@Icons.Material.Filled.ZoomIn" 
+                       Size="Size.Small" 
+                       Color="Color.Primary" 
+                       OnClick="ZoomIn" 
+                       Title="Zoom In" />
+        <MudIconButton Icon="@Icons.Material.Filled.ZoomOut" 
+                       Size="Size.Small" 
+                       Color="Color.Primary" 
+                       OnClick="ZoomOut" 
+                       Title="Zoom Out" />
+        <MudIconButton Icon="@Icons.Material.Filled.CenterFocusStrong" 
+                       Size="Size.Small" 
+                       Color="Color.Secondary" 
+                       OnClick="ResetZoom" 
+                       Title="Reset Zoom" />
+        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" 
+                       Size="Size.Small" 
+                       Color="Color.Error" 
+                       OnClick="ExportarPdf" 
+                       Title="Exportar PDF" />
+        <MudIconButton Icon="@Icons.Material.Filled.Image" 
+                       Size="Size.Small" 
+                       Color="Color.Success" 
+                       OnClick="ExportarSvg" 
+                       Title="Exportar SVG" />
+    </div>
+    
+    @if (_carregando)
+    {
+        <MudProgressCircular Color="Color.Primary" Style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" />
+    }
+    else if (_temErro)
+    {
+        <MudAlert Severity="Severity.Warning" Class="ma-4">
+            <AlertContent>
+                <MudText Typo="Typo.body1">Erro na sintaxe do diagrama</MudText>
+                <MudText Typo="Typo.body2">Verifique o código Mermaid e tente novamente.</MudText>
+            </AlertContent>
+        </MudAlert>
+    }
+    <div id="@ElementoId" class="mermaid-output" style="@(_carregando || _temErro ? "display: none;" : ""); overflow: hidden;"></div>
+</MudPaper>
+
+@code {
+    [Parameter] public string CodigoMermaid { get; set; } = string.Empty;
+    
+    private readonly string ElementoId = $"mermaid-viewer-{Guid.NewGuid():N}";
+    private bool _carregando = false;
+    private bool _temErro = false;
+    private double _zoomLevel = 1.0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(CodigoMermaid))
+        {
+            _carregando = true;
+            _temErro = false;
+            StateHasChanged();
+            
+            try
+            {
+                await Task.Delay(100); // Pequeno delay para mostrar loading
+                await ServicoRenderizacao.RenderizarDiagramaAsync(ElementoId, CodigoMermaid);
+                _temErro = false;
+            }
+            catch
+            {
+                _temErro = true;
+            }
+            finally
+            {
+                _carregando = false;
+                StateHasChanged();
+            }
+        }
+    }
+    
+    private async Task ZoomIn()
+    {
+        _zoomLevel = Math.Min(3.0, _zoomLevel * 1.2);
+        await JSRuntime.InvokeVoidAsync("zoomManager.setZoom", ElementoId, _zoomLevel);
+    }
+    
+    private async Task ZoomOut()
+    {
+        _zoomLevel = Math.Max(0.1, _zoomLevel / 1.2);
+        await JSRuntime.InvokeVoidAsync("zoomManager.setZoom", ElementoId, _zoomLevel);
+    }
+    
+    private async Task ResetZoom()
+    {
+        _zoomLevel = 1.0;
+        await JSRuntime.InvokeVoidAsync("zoomManager.setZoom", ElementoId, _zoomLevel);
+    }
+    
+    private async Task ExportarPdf()
+    {
+        await JSRuntime.InvokeVoidAsync("exportToPdf", ElementoId);
+    }
+    
+    private async Task ExportarSvg()
+    {
+        await JSRuntime.InvokeVoidAsync("exportToSvg", ElementoId);
+    }
+}

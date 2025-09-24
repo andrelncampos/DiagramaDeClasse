@@ -1,0 +1,45 @@
+.mermaid-output {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    min-height: 300px;
+    padding: 1rem;
+}
+
+.mermaid-output svg {
+    max-width: 100%;
+    height: auto;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+/* Melhorias para tema escuro */
+.mud-theme-dark .mermaid-output {
+    background-color: var(--mud-palette-surface);
+    border-radius: 4px;
+}
+
+/* Responsividade */
+@media (max-width: 960px) {
+    .mermaid-output {
+        min-height: 200px;
+    }
+}

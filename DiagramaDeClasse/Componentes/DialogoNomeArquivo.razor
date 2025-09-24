@@ -1,0 +1,22 @@
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="NomeArquivo" 
+                      Label="Nome do arquivo" 
+                      Variant="Variant.Outlined" 
+                      Placeholder="meu-diagrama"
+                      HelperText="Extensão .dcl será adicionada automaticamente" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Exportar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    
+    private string NomeArquivo = "diagrama-classe";
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(NomeArquivo));
+    void Cancel() => MudDialog.Cancel();
+}

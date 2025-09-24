@@ -1,0 +1,82 @@
+@page "/"
+@using DiagramaDeClasse.Modelos
+@using DiagramaDeClasse.Componentes
+@using DiagramaDeClasse.Servicos
+@inject ServicoArmazenamentoBase ServicoArmazenamento
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<PageTitle>Editor de Diagramas de Classe</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
+    <BarraFerramentas Diagrama="_diagrama" OnDiagramaCarregado="OnDiagramaCarregado" />
+    
+    <div id="container" style="height: calc(100vh - 160px); display: grid; grid-template-columns: @(_larguraEsquerda.ToString(System.Globalization.CultureInfo.InvariantCulture))% 8px 1fr; gap: 0;">
+        <div style="overflow: hidden;">
+            <MudPaper Class="pa-4" Style="height: 100%; display: flex; flex-direction: column;" Elevation="3">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Code" Class="mr-2" />
+                    Editor de Código
+                </MudText>
+                <EditorCodigo @bind-Codigo="_diagrama.Codigo" />
+            </MudPaper>
+        </div>
+        
+        <div @onmousedown="IniciarResize" style="background: #e0e0e0; cursor: col-resize; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 3px; height: 30px; background: #999; border-radius: 2px;"></div>
+        </div>
+        
+        <div style="overflow: hidden;">
+            <MudPaper Class="pa-4" Style="height: 100%; overflow: auto;" Elevation="3">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="mr-2" />
+                    Visualização do Diagrama
+                </MudText>
+                <VisualizadorDiagrama CodigoMermaid="@_diagrama.Codigo" />
+            </MudPaper>
+        </div>
+    </div>
+</MudContainer>
+
+@code {
+    private DiagramaMermaid _diagrama = new();
+    private double _larguraEsquerda = 50;
+    private DotNetObjectReference<DiagramEditor>? _dotNetRef;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _dotNetRef = DotNetObjectReference.Create(this);
+        var diagramaCarregado = await ServicoArmazenamento.CarregarDiagramaAsync();
+        if (diagramaCarregado != null)
+        {
+            _diagrama = diagramaCarregado;
+        }
+    }
+
+    private void OnDiagramaCarregado(DiagramaMermaid diagrama)
+    {
+        _diagrama = diagrama;
+        StateHasChanged();
+    }
+    
+    private async Task IniciarResize(MouseEventArgs e)
+    {
+        await JSRuntime.InvokeVoidAsync("resizeManager.start", _dotNetRef);
+    }
+    
+    [JSInvokable]
+    public void UpdateWidth(double percentage)
+    {
+        _larguraEsquerda = Math.Max(20, Math.Min(80, percentage));
+        InvokeAsync(StateHasChanged);
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        if (_dotNetRef != null)
+        {
+            await JSRuntime.InvokeVoidAsync("resizeManager.dispose");
+            _dotNetRef.Dispose();
+        }
+    }
+}
