@@ -9,27 +9,27 @@
                        Size="Size.Small" 
                        Color="Color.Primary" 
                        OnClick="ZoomIn" 
-                       Title="Zoom In" />
+                       title="Zoom In" />
         <MudIconButton Icon="@Icons.Material.Filled.ZoomOut" 
                        Size="Size.Small" 
                        Color="Color.Primary" 
                        OnClick="ZoomOut" 
-                       Title="Zoom Out" />
+                       title="Zoom Out" />
         <MudIconButton Icon="@Icons.Material.Filled.CenterFocusStrong" 
                        Size="Size.Small" 
                        Color="Color.Secondary" 
                        OnClick="ResetZoom" 
-                       Title="Reset Zoom" />
+                       title="Reset Zoom" />
         <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" 
                        Size="Size.Small" 
                        Color="Color.Error" 
                        OnClick="ExportarPdf" 
-                       Title="Exportar PDF" />
+                       title="Exportar PDF" />
         <MudIconButton Icon="@Icons.Material.Filled.Image" 
                        Size="Size.Small" 
                        Color="Color.Success" 
                        OnClick="ExportarSvg" 
-                       Title="Exportar SVG" />
+                       title="Exportar SVG" />
     </div>
     
     @if (_carregando)
@@ -39,10 +39,8 @@
     else if (_temErro)
     {
         <MudAlert Severity="Severity.Warning" Class="ma-4">
-            <AlertContent>
-                <MudText Typo="Typo.body1">Erro na sintaxe do diagrama</MudText>
-                <MudText Typo="Typo.body2">Verifique o código Mermaid e tente novamente.</MudText>
-            </AlertContent>
+            <MudText Typo="Typo.body1">Erro na sintaxe do diagrama</MudText>
+            <MudText Typo="Typo.body2">Verifique o código Mermaid e tente novamente.</MudText>
         </MudAlert>
     }
     <div id="@ElementoId" class="mermaid-output" style="@(_carregando || _temErro ? "display: none;" : ""); overflow: hidden;"></div>

@@ -131,7 +131,10 @@
         var dialog = await DialogService.ShowAsync<DialogoNomeArquivo>("Exportar Diagrama");
         var result = await dialog.Result;
         
-        return result.Canceled ? string.Empty : result.Data?.ToString() ?? string.Empty;
+        if (result is null || result.Canceled)
+            return string.Empty;
+            
+        return (result.Data as string) ?? string.Empty;
     }
     
     private async Task AbrirHelp()
