@@ -11,18 +11,18 @@
             <MudText Typo="Typo.h6" Class="mb-3">📋 Estrutura Básica</MudText>
             <MudPaper Class="pa-3 mb-4" Elevation="1">
                 <MudText Typo="Typo.body2" Class="mb-2">Todo diagrama começa com:</MudText>
-                <MudCode>classDiagram</MudCode>
+                <code>classDiagram</code>
             </MudPaper>
 
             <MudText Typo="Typo.h6" Class="mb-3">🏗️ Definindo Classes</MudText>
             <MudPaper Class="pa-3 mb-4" Elevation="1">
                 <MudText Typo="Typo.body2" Class="mb-2">Sintaxe para criar uma classe:</MudText>
-                <MudCode>class MinhaClasse {
+                <code>class MinhaClasse {
     -atributoPrivado
     #atributoProtegido  
     +atributoPublico
     +metodo()
-}</MudCode>
+}</code>
             </MudPaper>
 
             <MudText Typo="Typo.h6" Class="mb-3">🔒 Visibilidade</MudText>
@@ -56,22 +56,22 @@
                 <tbody>
                     <tr>
                         <td><MudChip T="string" Size="Size.Small" Color="Color.Primary">Herança</MudChip></td>
-                        <td><MudCode>&lt;|--</MudCode></td>
+                        <td><code>&lt;|--</code></td>
                         <td>Pai &lt;|-- Filho</td>
                     </tr>
                     <tr>
                         <td><MudChip T="string" Size="Size.Small" Color="Color.Secondary">Composição</MudChip></td>
-                        <td><MudCode>*--</MudCode></td>
+                        <td><code>*--</code></td>
                         <td>Todo *-- Parte</td>
                     </tr>
                     <tr>
                         <td><MudChip T="string" Size="Size.Small" Color="Color.Tertiary">Agregação</MudChip></td>
-                        <td><MudCode>o--</MudCode></td>
+                        <td><code>o--</code></td>
                         <td>Container o-- Item</td>
                     </tr>
                     <tr>
                         <td><MudChip T="string" Size="Size.Small" Color="Color.Info">Associação</MudChip></td>
-                        <td><MudCode>--></MudCode></td>
+                        <td><code>--></code></td>
                         <td>ClasseA --> ClasseB</td>
                     </tr>
                 </tbody>
@@ -80,7 +80,7 @@
             <MudText Typo="Typo.h6" Class="mb-3 mt-4">🔢 Multiplicidade</MudText>
             <MudPaper Class="pa-3 mb-4" Elevation="1">
                 <MudText Typo="Typo.body2" Class="mb-2">Adicione números para indicar quantidades:</MudText>
-                <MudCode>Usuario "1" --> "0..*" Postagem</MudCode>
+                <code>Usuario "1" --> "0..*" Postagem</code>
                 <MudText Typo="Typo.caption" Class="mt-2">
                     1 usuário pode ter 0 ou muitas postagens
                 </MudText>
@@ -89,8 +89,8 @@
             <MudText Typo="Typo.h6" Class="mb-3">📐 Layout</MudText>
             <MudPaper Class="pa-3 mb-4" Elevation="1">
                 <MudText Typo="Typo.body2" Class="mb-2">Controle a direção do diagrama:</MudText>
-                <MudCode>direction LR  %% Left to Right
-direction TB  %% Top to Bottom</MudCode>
+                <code>direction LR  %% Left to Right
+direction TB  %% Top to Bottom</code>
             </MudPaper>
 
             <MudText Typo="Typo.h6" Class="mb-3">💡 Exemplo Completo</MudText>
@@ -130,7 +130,7 @@ direction TB  %% Top to Bottom</MudCode>
 </MudDialog>
 
 @code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
     
-    void Submit() => MudDialog.Close();
+    void Submit() => MudDialog?.Close();
 }
