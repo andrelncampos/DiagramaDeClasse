@@ -1,0 +1,141 @@
+@using DiagramaDeClasse.Modelos
+@using DiagramaDeClasse.Servicos
+@inject ServicoConfiguracaoIA ServicoConfiguracao
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudSelect T="ProvedorIA"
+                       Value="_configuracao.Provedor" 
+                       Label="Provedor de IA" 
+                       Variant="Variant.Outlined"
+                       ValueChanged="OnProvedorChanged">
+                <MudSelectItem Value="ProvedorIA.OpenAI">OpenAI (ChatGPT)</MudSelectItem>
+                <MudSelectItem Value="ProvedorIA.Google">Google (Gemini)</MudSelectItem>
+                <MudSelectItem Value="ProvedorIA.Claude">Anthropic (Claude)</MudSelectItem>
+            </MudSelect>
+
+            <MudTextField @bind-Value="_configuracao.ChaveApi"
+                          Label="Chave da API"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          HelperText="Sua chave de API será armazenada localmente no navegador" />
+
+            <MudTextField @bind-Value="_configuracao.UrlBase"
+                          Label="URL Base (opcional)"
+                          Variant="Variant.Outlined"
+                          HelperText="@_urlHelper" />
+
+            <MudTextField @bind-Value="_configuracao.Modelo"
+                          Label="Modelo"
+                          Variant="Variant.Outlined"
+                          HelperText="@_modeloHelper" />
+
+            <MudAlert Severity="Severity.Success" Dense="true">
+                <MudText Typo="Typo.body2">
+                    <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="mr-1" />
+                    Suas credenciais são criptografadas e armazenadas apenas no seu navegador.
+                </MudText>
+            </MudAlert>
+
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Success" 
+                       StartIcon="@Icons.Material.Filled.CardGiftcard"
+                       OnClick="AbrirDialogoIAGratuita"
+                       FullWidth="true">
+                Obtenha IA Gratuita
+            </MudButton>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Salvar">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    private ConfiguracaoIA _configuracao = new();
+    private string _urlHelper = string.Empty;
+    private string _modeloHelper = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _configuracao = await ServicoConfiguracao.CarregarConfiguracaoAsync();
+        AtualizarHelpers();
+    }
+
+    private async Task OnProvedorChanged(ProvedorIA provedor)
+    {
+        _configuracao.Provedor = provedor;
+        
+        // Define valores padrão baseado no provedor
+        switch (provedor)
+        {
+            case ProvedorIA.OpenAI:
+                _configuracao.UrlBase = "https://api.openai.com/v1";
+                _configuracao.Modelo = "gpt-4o-mini";
+                break;
+            case ProvedorIA.Google:
+                _configuracao.UrlBase = "https://generativelanguage.googleapis.com";
+                _configuracao.Modelo = "gemini-2.0-flash-exp";
+                break;
+            case ProvedorIA.Claude:
+                _configuracao.UrlBase = "https://api.anthropic.com/v1";
+                _configuracao.Modelo = "claude-3-5-sonnet-20241022";
+                break;
+        }
+        
+        AtualizarHelpers();
+        await Task.CompletedTask;
+    }
+
+    private void AtualizarHelpers()
+    {
+        _urlHelper = _configuracao.Provedor switch
+        {
+            ProvedorIA.OpenAI => "Padrão: https://api.openai.com/v1",
+            ProvedorIA.Google => "Padrão: https://generativelanguage.googleapis.com",
+            ProvedorIA.Claude => "Padrão: https://api.anthropic.com/v1",
+            _ => string.Empty
+        };
+
+        _modeloHelper = _configuracao.Provedor switch
+        {
+            ProvedorIA.OpenAI => "Ex: gpt-4o, gpt-4o-mini, gpt-3.5-turbo",
+            ProvedorIA.Google => "Ex: gemini-2.0-flash-exp, gemini-1.5-flash, gemini-1.5-pro",
+            ProvedorIA.Claude => "Ex: claude-3-5-sonnet-20241022, claude-3-5-haiku-20241022",
+            _ => string.Empty
+        };
+    }
+
+    private async Task Salvar()
+    {
+        if (string.IsNullOrWhiteSpace(_configuracao.ChaveApi))
+        {
+            Snackbar.Add("A chave da API é obrigatória", Severity.Warning);
+            return;
+        }
+
+        await ServicoConfiguracao.SalvarConfiguracaoAsync(_configuracao);
+        Snackbar.Add("Configuração salva com sucesso!", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task AbrirDialogoIAGratuita()
+    {
+        await DialogService.ShowAsync<DialogoIAGratuita>("Como obter IA gratuita", new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        });
+    }
+}

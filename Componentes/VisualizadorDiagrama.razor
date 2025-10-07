@@ -2,7 +2,7 @@
 @inject ServicoRenderizacaoMermaid ServicoRenderizacao
 @inject IJSRuntime JSRuntime
 
-<MudPaper Class="pa-4" Style="min-height: 400px; position: relative;" Elevation="1">
+<MudPaper Class="pa-4 mermaid-host" Style="height: 100%; position: relative; display: flex; flex-direction: column;" Elevation="1">
     <!-- Controles de Zoom -->
     <div style="position: absolute; top: 8px; right: 8px; z-index: 10; display: flex; gap: 4px;">
         <MudIconButton Icon="@Icons.Material.Filled.ZoomIn" 
@@ -43,7 +43,7 @@
             <MudText Typo="Typo.body2">Verifique o código Mermaid e tente novamente.</MudText>
         </MudAlert>
     }
-    <div id="@ElementoId" class="mermaid-output" style="@(_carregando || _temErro ? "display: none;" : ""); overflow: hidden;"></div>
+    <div id="@ElementoId" class="mermaid-output" style="@(_carregando || _temErro ? "display: none;" : "")"></div>
 </MudPaper>
 
 @code {
@@ -64,7 +64,7 @@
             
             try
             {
-                await Task.Delay(100); // Pequeno delay para mostrar loading
+                await Task.Delay(100);
                 await ServicoRenderizacao.RenderizarDiagramaAsync(ElementoId, CodigoMermaid);
                 _temErro = false;
             }
@@ -77,6 +77,17 @@
                 _carregando = false;
                 StateHasChanged();
             }
+        }
+        else
+        {
+            // Limpa visualização quando código está vazio
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("mermaidInterop.limparElemento", ElementoId);
+            }
+            catch { }
+            _temErro = false;
+            _carregando = false;
         }
     }
     

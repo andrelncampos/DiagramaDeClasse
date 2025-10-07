@@ -2,126 +2,12 @@
     <TitleContent>
         <div style="display: flex; align-items: center;">
             <MudIcon Icon="@Icons.Material.Filled.Help" Class="mr-3" />
-            Como usar Diagramas de Classe Mermaid
+            Como usar @TipoDiagrama
         </div>
     </TitleContent>
     <DialogContent>
         <div style="max-height: 70vh; overflow-y: auto;">
-            
-            <MudText Typo="Typo.h6" Class="mb-3">📋 Estrutura Básica</MudText>
-            <MudPaper Class="pa-3 mb-4" Elevation="1">
-                <MudText Typo="Typo.body2" Class="mb-2">Todo diagrama começa com:</MudText>
-                <code>classDiagram</code>
-            </MudPaper>
-
-            <MudText Typo="Typo.h6" Class="mb-3">🏗️ Definindo Classes</MudText>
-            <MudPaper Class="pa-3 mb-4" Elevation="1">
-                <MudText Typo="Typo.body2" Class="mb-2">Sintaxe para criar uma classe:</MudText>
-                <code>class MinhaClasse {
-    -atributoPrivado
-    #atributoProtegido  
-    +atributoPublico
-    +metodo()
-}</code>
-            </MudPaper>
-
-            <MudText Typo="Typo.h6" Class="mb-3">🔒 Visibilidade</MudText>
-            <MudGrid>
-                <MudItem xs="4">
-                    <MudAlert Severity="Severity.Info" Dense="true">
-                        <MudText><strong>-</strong> Privado</MudText>
-                    </MudAlert>
-                </MudItem>
-                <MudItem xs="4">
-                    <MudAlert Severity="Severity.Warning" Dense="true">
-                        <MudText><strong>#</strong> Protegido</MudText>
-                    </MudAlert>
-                </MudItem>
-                <MudItem xs="4">
-                    <MudAlert Severity="Severity.Success" Dense="true">
-                        <MudText><strong>+</strong> Público</MudText>
-                    </MudAlert>
-                </MudItem>
-            </MudGrid>
-
-            <MudText Typo="Typo.h6" Class="mb-3 mt-4">🔗 Relacionamentos</MudText>
-            <MudSimpleTable Dense="true" Hover="true">
-                <thead>
-                    <tr>
-                        <th>Tipo</th>
-                        <th>Sintaxe</th>
-                        <th>Significado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><MudChip T="string" Size="Size.Small" Color="Color.Primary">Herança</MudChip></td>
-                        <td><code>&lt;|--</code></td>
-                        <td>Pai &lt;|-- Filho</td>
-                    </tr>
-                    <tr>
-                        <td><MudChip T="string" Size="Size.Small" Color="Color.Secondary">Composição</MudChip></td>
-                        <td><code>*--</code></td>
-                        <td>Todo *-- Parte</td>
-                    </tr>
-                    <tr>
-                        <td><MudChip T="string" Size="Size.Small" Color="Color.Tertiary">Agregação</MudChip></td>
-                        <td><code>o--</code></td>
-                        <td>Container o-- Item</td>
-                    </tr>
-                    <tr>
-                        <td><MudChip T="string" Size="Size.Small" Color="Color.Info">Associação</MudChip></td>
-                        <td><code>--></code></td>
-                        <td>ClasseA --> ClasseB</td>
-                    </tr>
-                </tbody>
-            </MudSimpleTable>
-
-            <MudText Typo="Typo.h6" Class="mb-3 mt-4">🔢 Multiplicidade</MudText>
-            <MudPaper Class="pa-3 mb-4" Elevation="1">
-                <MudText Typo="Typo.body2" Class="mb-2">Adicione números para indicar quantidades:</MudText>
-                <code>Usuario "1" --> "0..*" Postagem</code>
-                <MudText Typo="Typo.caption" Class="mt-2">
-                    1 usuário pode ter 0 ou muitas postagens
-                </MudText>
-            </MudPaper>
-
-            <MudText Typo="Typo.h6" Class="mb-3">📐 Layout</MudText>
-            <MudPaper Class="pa-3 mb-4" Elevation="1">
-                <MudText Typo="Typo.body2" Class="mb-2">Controle a direção do diagrama:</MudText>
-                <code>direction LR  %% Left to Right
-direction TB  %% Top to Bottom</code>
-            </MudPaper>
-
-            <MudText Typo="Typo.h6" Class="mb-3">💡 Exemplo Completo</MudText>
-            <MudPaper Class="pa-3" Elevation="1">
-                <pre style="font-family: 'Courier New', monospace; white-space: pre-wrap; margin: 0;">classDiagram
-    direction LR
-
-    class Animal {
-      #String nome
-      +comer()
-      +dormir()
-    }
-
-    class Cachorro {
-      +latir()
-    }
-    
-    %% A classe Dono precisa ser definida
-    class Dono {
-      +String nome
-    }
-
-    %% --- Relacionamentos ---
-
-    %% Herança
-    Animal &lt;|-- Cachorro
-
-    %% Associação
-    Cachorro "1" --> "1" Dono : pertence</pre>
-            </MudPaper>
-
+            @((MarkupString)ObterConteudoHelp())
         </div>
     </DialogContent>
     <DialogActions>
@@ -131,6 +17,108 @@ direction TB  %% Top to Bottom</code>
 
 @code {
     [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+    [Parameter] public string TipoDiagrama { get; set; } = "Diagrama de Classe";
     
     void Submit() => MudDialog?.Close();
+    
+    private string ObterConteudoHelp() => TipoDiagrama switch
+    {
+        "Diagrama de Classe" => ConteudoDiagramaClasse(),
+        "Fluxograma" => ConteudoFluxograma(),
+        "Diagrama de Sequência" => ConteudoDiagramaSequencia(),
+        "Diagrama de Estado" => ConteudoDiagramaEstado(),
+        "Diagrama ER" => ConteudoDiagramaER(),
+        "Gráfico de Gantt" => ConteudoGantt(),
+        "Gráfico de Pizza" => ConteudoPizza(),
+        "Jornada do Usuário" => ConteudoJornada(),
+        "Diagrama Git" => ConteudoGit(),
+        "Mindmap" => ConteudoMindmap(),
+        "Timeline" => ConteudoTimeline(),
+        _ => ConteudoDiagramaClasse()
+    };
+    
+    private string ConteudoDiagramaClasse() => @"<h3>📋 O que é</h3><p>Diagrama de Classe representa a estrutura de classes e seus relacionamentos em um sistema orientado a objetos.</p><h3>🏗️ Como construir</h3><p><strong>Estrutura básica:</strong></p><pre>classDiagram
+    class MinhaClasse {
+        -atributoPrivado
+        #atributoProtegido
+        +atributoPublico
+        +metodo()
+    }</pre><p><strong>Relacionamentos:</strong></p><ul><li><code>&lt;|--</code> Herança</li><li><code>*--</code> Composição</li><li><code>o--</code> Agregação</li><li><code>--></code> Associação</li></ul><h3>💡 Exemplo completo</h3><pre>classDiagram
+    class Animal {
+        +String nome
+        +comer()
+    }
+    class Cachorro {
+        +latir()
+    }
+    Animal &lt;|-- Cachorro</pre>";
+    
+    private string ConteudoFluxograma() => @"<h3>📋 O que é</h3><p>Fluxograma representa o fluxo de processos, decisões e ações em um sistema ou algoritmo.</p><h3>🏗️ Como construir</h3><p><strong>Direção:</strong> <code>flowchart TD</code> (cima-baixo) ou <code>LR</code> (esquerda-direita)</p><p><strong>Formas:</strong></p><ul><li><code>A[Texto]</code> Retângulo</li><li><code>B(Texto)</code> Arredondado</li><li><code>C{Texto}</code> Decisão</li></ul><p><strong>Conexões:</strong> <code>--></code> seta, <code>---|texto|</code> com rótulo</p><h3>💡 Exemplo completo</h3><pre>flowchart TD
+    A[Início] --> B{Condição?}
+    B -->|Sim| C[Ação 1]
+    B -->|Não| D[Ação 2]
+    C --> E[Fim]
+    D --> E</pre>";
+    
+    private string ConteudoDiagramaSequencia() => @"<h3>📋 O que é</h3><p>Diagrama de Sequência mostra a interação entre objetos ao longo do tempo, com foco na ordem das mensagens.</p><h3>🏗️ Como construir</h3><p><strong>Participantes:</strong></p><pre>participant Cliente
+participant Servidor</pre><p><strong>Mensagens:</strong></p><ul><li><code>A->>B:</code> Síncrona</li><li><code>A-->>B:</code> Assíncrona (resposta)</li></ul><h3>💡 Exemplo completo</h3><pre>sequenceDiagram
+    Cliente->>Servidor: Requisição
+    Servidor->>BD: Consulta
+    BD-->>Servidor: Dados
+    Servidor-->>Cliente: Resposta</pre>";
+    
+    private string ConteudoDiagramaEstado() => @"<h3>📋 O que é</h3><p>Diagrama de Estado representa os diferentes estados de um objeto e as transições entre eles.</p><h3>🏗️ Como construir</h3><p><strong>Estados:</strong> <code>[*]</code> início/fim</p><p><strong>Transições:</strong> <code>Estado1 --> Estado2 : evento</code></p><h3>💡 Exemplo completo</h3><pre>stateDiagram-v2
+    [*] --> Inativo
+    Inativo --> Ativo: iniciar
+    Ativo --> Pausado: pausar
+    Pausado --> Ativo: retomar
+    Ativo --> [*]: finalizar</pre>";
+    
+    private string ConteudoDiagramaER() => @"<h3>📋 O que é</h3><p>Diagrama Entidade-Relacionamento modela a estrutura de dados de um banco de dados.</p><h3>🏗️ Como construir</h3><p><strong>Relacionamentos:</strong></p><ul><li><code>||--o{</code> Um para muitos</li><li><code>||--||</code> Um para um</li><li><code>}o--o{</code> Muitos para muitos</li></ul><h3>💡 Exemplo completo</h3><pre>erDiagram
+    CLIENTE ||--o{ PEDIDO : faz
+    PEDIDO ||--|{ ITEM : contém
+    CLIENTE {
+        int id
+        string nome
+    }</pre>";
+    
+    private string ConteudoGantt() => @"<h3>📋 O que é</h3><p>Gráfico de Gantt visualiza o cronograma de um projeto com tarefas e suas durações.</p><h3>🏗️ Como construir</h3><p><strong>Formato de data:</strong> <code>dateFormat YYYY-MM-DD</code></p><p><strong>Tarefas:</strong> <code>Nome :id, data, duração</code></p><h3>💡 Exemplo completo</h3><pre>gantt
+    title Projeto
+    dateFormat YYYY-MM-DD
+    section Fase 1
+    Tarefa A :a1, 2024-01-01, 7d
+    Tarefa B :after a1, 5d</pre>";
+    
+    private string ConteudoPizza() => @"<h3>📋 O que é</h3><p>Gráfico de Pizza mostra a distribuição proporcional de dados em categorias.</p><h3>🏗️ Como construir</h3><p><strong>Sintaxe:</strong> <code>""Nome"" : valor</code></p><h3>💡 Exemplo completo</h3><pre>pie title Vendas
+    ""Produto A"" : 45
+    ""Produto B"" : 30
+    ""Produto C"" : 25</pre>";
+    
+    private string ConteudoJornada() => @"<h3>📋 O que é</h3><p>Jornada do Usuário mapeia a experiência do usuário através de diferentes etapas e interações.</p><h3>🏗️ Como construir</h3><p><strong>Sintaxe:</strong> <code>Tarefa: satisfação: Ator</code></p><p>Satisfação de 1 a 5</p><h3>💡 Exemplo completo</h3><pre>journey
+    title Compra Online
+    section Descoberta
+      Buscar: 5: Cliente
+    section Compra
+      Pagar: 3: Cliente</pre>";
+    
+    private string ConteudoGit() => @"<h3>📋 O que é</h3><p>Diagrama Git visualiza o histórico de commits e branches de um repositório.</p><h3>🏗️ Como construir</h3><p><strong>Comandos:</strong> <code>commit</code>, <code>branch</code>, <code>checkout</code>, <code>merge</code></p><h3>💡 Exemplo completo</h3><pre>gitGraph
+    commit
+    branch develop
+    checkout develop
+    commit
+    checkout main
+    merge develop</pre>";
+    
+    private string ConteudoMindmap() => @"<h3>📋 O que é</h3><p>Mindmap organiza ideias e conceitos de forma hierárquica e visual.</p><h3>🏗️ Como construir</h3><p>Use indentação para criar hierarquia</p><p><code>root((Central))</code> para o nó raiz</p><h3>💡 Exemplo completo</h3><pre>mindmap
+  root((Projeto))
+    Planejamento
+      Requisitos
+    Desenvolvimento
+      Backend</pre>";
+    
+    private string ConteudoTimeline() => @"<h3>📋 O que é</h3><p>Timeline representa eventos em ordem cronológica ao longo do tempo.</p><h3>🏗️ Como construir</h3><p><strong>Sintaxe:</strong> <code>ano : evento</code></p><h3>💡 Exemplo completo</h3><pre>timeline
+    title História
+    2020 : Evento A
+    2021 : Evento B
+    2022 : Evento C</pre>";
 }

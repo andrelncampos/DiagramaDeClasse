@@ -6,19 +6,26 @@
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
-<PageTitle>Editor de Diagramas de Classe</PageTitle>
+<PageTitle>Diagramas Expert</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
-    <BarraFerramentas Diagrama="_diagrama" OnDiagramaCarregado="OnDiagramaCarregado" />
+<div style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+    <BarraFerramentas Diagrama="_diagrama" 
+                      OnDiagramaCarregado="OnDiagramaCarregado" 
+                      OnTipoAlterado="OnTipoAlterado" />
     
-    <div id="container" style="height: calc(100vh - 160px); display: grid; grid-template-columns: @(_larguraEsquerda.ToString(System.Globalization.CultureInfo.InvariantCulture))% 8px 1fr; gap: 0;">
+    <div id="container" style="flex: 1; display: grid; grid-template-columns: @(_larguraEsquerda.ToString(System.Globalization.CultureInfo.InvariantCulture))% 8px 1fr; gap: 0; overflow: hidden;">
         <div style="overflow: hidden;">
-            <MudPaper Class="pa-4" Style="height: 100%; display: flex; flex-direction: column;" Elevation="3">
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.Code" Class="mr-2" />
-                    Editor de Código
-                </MudText>
-                <EditorCodigo @bind-Codigo="_diagrama.Codigo" />
+            <MudPaper Class="pa-2" Style="height: 100%; display: flex; flex-direction: column;" Elevation="3">
+                <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-1" Style="flex: 1; display: flex; flex-direction: column;">
+                    <MudTabPanel Text="Editor" Icon="@Icons.Material.Filled.Code">
+                        <EditorCodigo @bind-Codigo="_diagrama.Codigo" />
+                    </MudTabPanel>
+                    <MudTabPanel Text="Prompt IA" Icon="@Icons.Material.Filled.AutoAwesome">
+                        <PromptIA DiagramaAtual="@_diagrama.Codigo" 
+                                  TipoDiagrama="@_tipoAtual" 
+                                  OnCodigoGerado="AplicarCodigoGerado" />
+                    </MudTabPanel>
+                </MudTabs>
             </MudPaper>
         </div>
         
@@ -27,36 +34,85 @@
         </div>
         
         <div style="overflow: hidden;">
-            <MudPaper Class="pa-4" Style="height: 100%; overflow: auto;" Elevation="3">
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="mr-2" />
-                    Visualização do Diagrama
+            <MudPaper Class="pa-2" Style="height: 100%; overflow: auto;" Elevation="3">
+                <MudText Typo="Typo.subtitle1" Class="mb-1">
+                    <MudIcon Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Class="mr-1" />
+                    Visualização
                 </MudText>
                 <VisualizadorDiagrama CodigoMermaid="@_diagrama.Codigo" />
             </MudPaper>
         </div>
     </div>
-</MudContainer>
+</div>
 
 @code {
     private DiagramaMermaid _diagrama = new();
     private double _larguraEsquerda = 50;
     private DotNetObjectReference<DiagramEditor>? _dotNetRef;
+    private string _tipoAtual = "Diagrama de Classe";
+    private System.Timers.Timer? _timerSalvamento;
     
     protected override async Task OnInitializedAsync()
     {
         _dotNetRef = DotNetObjectReference.Create(this);
-        var diagramaCarregado = await ServicoArmazenamento.CarregarDiagramaAsync();
-        if (diagramaCarregado != null)
+        
+        // Carrega diagrama do tipo padrão
+        var servicoLocal = ServicoArmazenamento as ServicoArmazenamentoLocal;
+        if (servicoLocal != null)
         {
-            _diagrama = diagramaCarregado;
+            var diagramaCarregado = await servicoLocal.CarregarDiagramaPorTipoAsync(_tipoAtual);
+            if (diagramaCarregado != null)
+            {
+                _diagrama = diagramaCarregado;
+            }
         }
+        
+        // Configura salvamento automático
+        _timerSalvamento = new System.Timers.Timer(2000);
+        _timerSalvamento.Elapsed += async (s, e) => await SalvarAutomaticamente();
+        _timerSalvamento.Start();
     }
 
     private void OnDiagramaCarregado(DiagramaMermaid diagrama)
     {
         _diagrama = diagrama;
         StateHasChanged();
+    }
+    
+    private async Task OnTipoAlterado(string novoTipo)
+    {
+        // Salva diagrama do tipo atual antes de trocar
+        var servicoLocal = ServicoArmazenamento as ServicoArmazenamentoLocal;
+        if (servicoLocal != null)
+        {
+            await servicoLocal.SalvarDiagramaPorTipoAsync(_tipoAtual, _diagrama);
+            
+            // Carrega diagrama do novo tipo
+            _tipoAtual = novoTipo;
+            var diagramaCarregado = await servicoLocal.CarregarDiagramaPorTipoAsync(_tipoAtual);
+            
+            if (diagramaCarregado != null)
+            {
+                _diagrama = diagramaCarregado;
+            }
+            else
+            {
+                // Se não existe, cria novo vazio
+                _diagrama = new DiagramaMermaid();
+                _diagrama.AtualizarCodigo("");
+            }
+            
+            StateHasChanged();
+        }
+    }
+    
+    private async Task SalvarAutomaticamente()
+    {
+        var servicoLocal = ServicoArmazenamento as ServicoArmazenamentoLocal;
+        if (servicoLocal != null)
+        {
+            await servicoLocal.SalvarDiagramaPorTipoAsync(_tipoAtual, _diagrama);
+        }
     }
     
     private async Task IniciarResize(MouseEventArgs e)
@@ -71,8 +127,17 @@
         InvokeAsync(StateHasChanged);
     }
     
+    private void AplicarCodigoGerado(string codigoGerado)
+    {
+        _diagrama.AtualizarCodigo(codigoGerado);
+        StateHasChanged();
+    }
+    
     public async ValueTask DisposeAsync()
     {
+        _timerSalvamento?.Stop();
+        _timerSalvamento?.Dispose();
+        
         if (_dotNetRef != null)
         {
             await JSRuntime.InvokeVoidAsync("resizeManager.dispose");

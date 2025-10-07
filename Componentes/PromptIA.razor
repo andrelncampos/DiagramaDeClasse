@@ -1,0 +1,70 @@
+@using DiagramaDeClasse.Modelos
+@using DiagramaDeClasse.Servicos
+@inject ServicoIA ServicoIA
+@inject ISnackbar Snackbar
+
+<div style="height: 100%; display: flex; flex-direction: column;">
+    <MudTextField @bind-Value="_prompt"
+                  Label="Digite seu prompt para a IA"
+                  Variant="Variant.Outlined"
+                  Lines="10"
+                  AutoGrow
+                  Margin="Margin.Dense"
+                  Placeholder="Ex: Adicione uma classe Autor com nome e nacionalidade" />
+    
+    <MudButton Variant="Variant.Filled" 
+               Color="Color.Primary" 
+               StartIcon="@Icons.Material.Filled.AutoAwesome"
+               Class="mt-2"
+               Size="Size.Small"
+               FullWidth="true"
+               OnClick="EnviarPrompt"
+               Disabled="_processando">
+        @(_processando ? "Gerando..." : "Gerar Diagrama")
+    </MudButton>
+    
+    @if (_processando)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+    }
+</div>
+
+@code {
+    [Parameter] public string DiagramaAtual { get; set; } = string.Empty;
+    [Parameter] public string TipoDiagrama { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnCodigoGerado { get; set; }
+    
+    private string _prompt = string.Empty;
+    private bool _processando = false;
+
+    private async Task EnviarPrompt()
+    {
+        if (string.IsNullOrWhiteSpace(_prompt))
+        {
+            Snackbar.Add("Digite um prompt", Severity.Warning);
+            return;
+        }
+
+        _processando = true;
+        
+        try
+        {
+            var codigoGerado = await ServicoIA.GerarDiagramaAsync(DiagramaAtual, _prompt, TipoDiagrama);
+            await OnCodigoGerado.InvokeAsync(codigoGerado);
+            Snackbar.Add("Diagrama gerado com sucesso!", Severity.Success);
+            _prompt = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao gerar diagrama: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processando = false;
+        }
+    }
+}

@@ -5,143 +5,169 @@
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
 
-<MudPaper Class="pa-3 mb-4" Elevation="2">
-    <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+<MudPaper Class="pa-2 mb-2" Elevation="2">
+    <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+
+        <MudSelect T="TipoDiagrama" 
+                   Value="_tipoSelecionado"
+                   ValueChanged="TipoSelecionadoChanged"
+                   Label="Tipo de Diagrama" 
+                   Variant="Variant.Outlined" 
+                   Dense="true"
+                   Style="min-width: 200px;"
+                   ToStringFunc="@(t => t?.Nome ?? string.Empty)">
+            @foreach (var tipo in _tiposDiagrama)
+            {
+                <MudSelectItem Value="@tipo">@tipo.Nome</MudSelectItem>
+            }
+        </MudSelect>
 
         <MudButton Variant="Variant.Text" 
                    Color="Color.Info"
-                   StartIcon="@Icons.Material.Filled.Refresh"
-                   OnClick="LimparDiagrama"
-                   Size="Size.Medium">
+                   StartIcon="@Icons.Material.Filled.Lightbulb"
+                   OnClick="AbrirExemplo"
+                   Size="Size.Small">
             Exemplo
         </MudButton>
         <MudDivider Vertical="true" FlexItem="true" />
         <MudButton Variant="Variant.Text" 
                    Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.FileDownload"
-                   OnClick="ExportarArquivo"
-                   Size="Size.Medium">
-            Exportar
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SalvarArquivo"
+                   Size="Size.Small">
+            Salvar
         </MudButton>
         <MudButton Variant="Variant.Text" 
                    Color="Color.Secondary"
-                   StartIcon="@Icons.Material.Filled.FileUpload"
-                   OnClick="ImportarArquivo"
-                   Size="Size.Medium">
-            Importar
+                   StartIcon="@Icons.Material.Filled.FolderOpen"
+                   OnClick="AbrirArquivo"
+                   Size="Size.Small">
+            Abrir
         </MudButton>
         <MudSpacer />
         <MudButton Variant="Variant.Text" 
-                   Color="Color.Info"
-                   StartIcon="@Icons.Material.Filled.Help"
-                   OnClick="AbrirHelp"
-                   Size="Size.Medium">
-            Help
+                   Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.Settings"
+                   OnClick="AbrirConfiguracaoIA"
+                   Size="Size.Small">
+            Configurar IA
         </MudButton>
-        <MudChip T="string" 
-                 Icon="@Icons.Material.Filled.CloudDone" 
-                 Color="Color.Success" 
-                 Size="Size.Small">
-            Salvamento Automático
-        </MudChip>
+        <MudButton Variant="Variant.Text" 
+                   Color="Color.Info"
+                   StartIcon="@Icons.Material.Filled.Info"
+                   OnClick="AbrirSobre"
+                   Size="Size.Small">
+            Sobre
+        </MudButton>
     </MudStack>
 </MudPaper>
 
 @code {
     [Parameter] public DiagramaMermaid Diagrama { get; set; } = new();
     [Parameter] public EventCallback<DiagramaMermaid> OnDiagramaCarregado { get; set; }
+    [Parameter] public EventCallback<string> OnTipoAlterado { get; set; }
 
-    private async Task LimparDiagrama()
-    {
-        var diagramaLimpo = new DiagramaMermaid();
-        var codigoExemplo = @"classDiagram
-    direction LR
-
-    class Veiculo {
-      #String marca
-      #String modelo
-      +acelerar()
-      +frear()
-    }
-
-    class Motor {
-      -int potenciaHP
-    }
-
-    class Carro {
-      -int numeroDePortas
-      +abrirPortaMalas()
-    }
+    private List<TipoDiagrama> _tiposDiagrama = TipoDiagrama.ObterTodos();
+    private TipoDiagrama _tipoSelecionado = TipoDiagrama.ObterTodos().First();
     
-    class Motocicleta {
-      -int cilindradas
-      +empinar()
-    }
-
-    class Motorista {
-      -String nome
-      -String cnh
-    }
-
-    class Garagem {
-        -String endereco
-    }
-
-    Veiculo <|-- Carro
-    Veiculo <|-- Motocicleta
-    Veiculo ""1"" *-- ""1"" Motor : possui
-    Motorista ""1"" --> ""0..*"" Carro : dirige
-    Garagem ""1"" o-- ""0..*"" Carro : abriga";
-        diagramaLimpo.AtualizarCodigo(codigoExemplo);
-        await OnDiagramaCarregado.InvokeAsync(diagramaLimpo);
-        Snackbar.Add("Exemplo carregado!", Severity.Normal);
-    }
-    
-    private async Task ExportarArquivo()
+    private async Task TipoSelecionadoChanged(TipoDiagrama novoTipo)
     {
-        var nomeArquivo = await SolicitarNomeArquivo();
-        if (!string.IsNullOrEmpty(nomeArquivo))
+        if (_tipoSelecionado?.Nome != novoTipo?.Nome)
         {
-            await JSRuntime.InvokeVoidAsync("exportDcl", Diagrama.Codigo, nomeArquivo);
-            Snackbar.Add($"Arquivo {nomeArquivo}.dcl exportado!", Severity.Success);
+            _tipoSelecionado = novoTipo;
+            await OnTipoAlterado.InvokeAsync(novoTipo.Nome);
         }
     }
     
-    private async Task ImportarArquivo()
+    private async Task SalvarArquivo()
+    {
+        var sucesso = await JSRuntime.InvokeAsync<bool>("salvarArquivo", Diagrama.Codigo, "diagrama");
+        if (sucesso)
+        {
+            Snackbar.Add("Arquivo salvo com sucesso!", Severity.Success);
+        }
+    }
+    
+    private async Task AbrirArquivo()
     {
         try
         {
-            var conteudo = await JSRuntime.InvokeAsync<string>("importDcl");
+            var conteudo = await JSRuntime.InvokeAsync<string>("abrirArquivo");
             if (!string.IsNullOrEmpty(conteudo))
             {
-                var diagramaImportado = new DiagramaMermaid();
-                diagramaImportado.AtualizarCodigo(conteudo);
-                await OnDiagramaCarregado.InvokeAsync(diagramaImportado);
-                Snackbar.Add("Arquivo importado com sucesso!", Severity.Success);
+                // Detecta o tipo do diagrama pelo conteúdo
+                var tipoDetectado = DetectarTipoDiagrama(conteudo);
+                
+                // Muda o dropdown se necessário
+                if (tipoDetectado != null && tipoDetectado.Nome != _tipoSelecionado.Nome)
+                {
+                    _tipoSelecionado = tipoDetectado;
+                    await OnTipoAlterado.InvokeAsync(tipoDetectado.Nome);
+                    await Task.Delay(100); // Aguarda mudança de tipo
+                }
+                
+                // Carrega o diagrama
+                var diagramaAberto = new DiagramaMermaid();
+                diagramaAberto.AtualizarCodigo(conteudo);
+                await OnDiagramaCarregado.InvokeAsync(diagramaAberto);
+                Snackbar.Add("Arquivo aberto com sucesso!", Severity.Success);
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erro ao importar arquivo: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Erro ao abrir arquivo: {ex.Message}", Severity.Error);
         }
     }
     
-    private async Task<string> SolicitarNomeArquivo()
+    private TipoDiagrama? DetectarTipoDiagrama(string codigo)
     {
-        var dialog = await DialogService.ShowAsync<DialogoNomeArquivo>("Exportar Diagrama");
-        var result = await dialog.Result;
+        var codigoLower = codigo.Trim().ToLower();
         
-        if (result is null || result.Canceled)
-            return string.Empty;
-            
-        return (result.Data as string) ?? string.Empty;
+        if (codigoLower.StartsWith("classdiagram")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Diagrama de Classe");
+        if (codigoLower.StartsWith("flowchart") || codigoLower.StartsWith("graph")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Fluxograma");
+        if (codigoLower.StartsWith("sequencediagram")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Diagrama de Sequência");
+        if (codigoLower.StartsWith("statediagram")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Diagrama de Estado");
+        if (codigoLower.StartsWith("erdiagram")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Diagrama ER");
+        if (codigoLower.StartsWith("gantt")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Gráfico de Gantt");
+        if (codigoLower.StartsWith("pie")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Gráfico de Pizza");
+        if (codigoLower.StartsWith("journey")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Jornada do Usuário");
+        if (codigoLower.StartsWith("gitgraph")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Diagrama Git");
+        if (codigoLower.StartsWith("mindmap")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Mindmap");
+        if (codigoLower.StartsWith("timeline")) return _tiposDiagrama.FirstOrDefault(t => t.Nome == "Timeline");
+        
+        return null;
     }
     
-    private async Task AbrirHelp()
+
+    
+    private async Task AbrirExemplo()
     {
-        await DialogService.ShowAsync<DialogoHelp>("Como usar Diagramas de Classe", new DialogOptions
+        var parameters = new DialogParameters<DialogoHelp>
+        {
+            { x => x.TipoDiagrama, _tipoSelecionado.Nome }
+        };
+        
+        await DialogService.ShowAsync<DialogoHelp>($"Como usar {_tipoSelecionado.Nome}", parameters, new DialogOptions
         {
             MaxWidth = MaxWidth.Large,
+            FullWidth = true
+        });
+    }
+    
+    private async Task AbrirConfiguracaoIA()
+    {
+        await DialogService.ShowAsync<DialogoConfiguracaoIA>("Configuração de IA", new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        });
+    }
+    
+    private async Task AbrirSobre()
+    {
+        await DialogService.ShowAsync<DialogoSobre>("Sobre", new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
             FullWidth = true
         });
     }

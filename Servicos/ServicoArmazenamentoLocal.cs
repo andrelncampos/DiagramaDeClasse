@@ -28,4 +28,23 @@ public class ServicoArmazenamentoLocal : ServicoArmazenamentoBase
         diagrama.AtualizarCodigo(codigoSalvo);
         return diagrama;
     }
+    
+    public async Task SalvarDiagramaPorTipoAsync(string tipoDiagrama, DiagramaMermaid diagrama)
+    {
+        var chave = $"{ChaveArmazenamento}_{tipoDiagrama}";
+        await _jsRuntime.InvokeVoidAsync("mermaidInterop.saveToLocalStorage", chave, diagrama.Codigo);
+    }
+    
+    public async Task<DiagramaMermaid?> CarregarDiagramaPorTipoAsync(string tipoDiagrama)
+    {
+        var chave = $"{ChaveArmazenamento}_{tipoDiagrama}";
+        var codigoSalvo = await _jsRuntime.InvokeAsync<string>("mermaidInterop.readFromLocalStorage", chave);
+        
+        if (string.IsNullOrEmpty(codigoSalvo))
+            return null;
+
+        var diagrama = new DiagramaMermaid();
+        diagrama.AtualizarCodigo(codigoSalvo);
+        return diagrama;
+    }
 }

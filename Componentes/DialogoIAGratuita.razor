@@ -1,0 +1,87 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudAlert Severity="Severity.Success" Dense="true">
+                <MudText Typo="Typo.body1"><strong>Google Gemini é 100% gratuito!</strong></MudText>
+            </MudAlert>
+
+            <MudText Typo="Typo.h6">Como obter sua chave gratuita:</MudText>
+
+            <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start">
+                <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                    <MudText Typo="Typo.body1">
+                        <strong>1. Acesse o Google AI Studio</strong><br/>
+                        <MudLink Href="https://aistudio.google.com/app/apikey" Target="_blank" Color="Color.Primary">
+                            https://aistudio.google.com/app/apikey
+                        </MudLink>
+                    </MudText>
+                </MudTimelineItem>
+
+                <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                    <MudText Typo="Typo.body1">
+                        <strong>2. Faça login com sua conta Google</strong><br/>
+                        Use qualquer conta Gmail
+                    </MudText>
+                </MudTimelineItem>
+
+                <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                    <MudText Typo="Typo.body1">
+                        <strong>3. Clique em "Create API Key"</strong><br/>
+                        Selecione um projeto ou crie um novo
+                    </MudText>
+                </MudTimelineItem>
+
+                <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                    <MudText Typo="Typo.body1">
+                        <strong>4. Copie sua chave e configure</strong><br/>
+                        Cole na configuração deste sistema
+                    </MudText>
+                </MudTimelineItem>
+            </MudTimeline>
+
+            <MudDivider />
+
+            <MudText Typo="Typo.h6">Configurações recomendadas:</MudText>
+
+            <MudPaper Class="pa-3" Elevation="0" Style="background-color: #f5f5f5;">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body2"><strong>Provedor:</strong> Google (Gemini)</MudText>
+                    <MudText Typo="Typo.body2"><strong>URL Base:</strong> https://generativelanguage.googleapis.com</MudText>
+                    <MudText Typo="Typo.body2"><strong>Modelo:</strong> gemini-2.0-flash-exp</MudText>
+                </MudStack>
+            </MudPaper>
+
+            <MudAlert Severity="Severity.Info" Dense="true">
+                <MudText Typo="Typo.body2">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                    Modelos disponíveis: <strong>gemini-2.0-flash-exp</strong> (mais rápido), <strong>gemini-1.5-flash</strong>, <strong>gemini-1.5-pro</strong> (mais avançado)
+                </MudText>
+            </MudAlert>
+
+            <MudAlert Severity="Severity.Warning" Dense="true">
+                <MudText Typo="Typo.body2">
+                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small" Class="mr-1" />
+                    Limite gratuito: 15 requisições por minuto - perfeito para uso pessoal!
+                </MudText>
+            </MudAlert>
+
+            <MudText Typo="Typo.caption" Class="mt-2">
+                <MudLink Href="https://ai.google.dev/gemini-api/docs?hl=pt-br" Target="_blank" Color="Color.Primary">
+                    Documentação oficial do Gemini API
+                </MudLink>
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Fechar">Entendi</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    private void Fechar()
+    {
+        MudDialog.Close();
+    }
+}

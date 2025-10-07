@@ -1,7 +1,12 @@
 window.mermaidInterop = {
+    limparElemento: (elementId) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.innerHTML = '';
+        }
+    },
     render: async (elementId, mermaidCode) => {
         try {
-            console.log('Renderizando:', elementId, 'Código:', mermaidCode);
             const element = document.getElementById(elementId);
             if (!element) {
                 console.error('Elemento não encontrado:', elementId);
@@ -303,40 +308,106 @@ window.exportToSvg = (elementId) => {
     URL.revokeObjectURL(url);
 };
 
-// Exportar arquivo .dcl
-window.exportDcl = (content, filename) => {
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename.endsWith('.dcl') ? filename : filename + '.dcl';
-    a.click();
-    
-    URL.revokeObjectURL(url);
+// Salvar arquivo .dcl com seleção de pasta
+window.salvarArquivo = async (content, filename) => {
+    try {
+        // Verifica se a API File System Access está disponível
+        if ('showSaveFilePicker' in window) {
+            const options = {
+                suggestedName: filename.endsWith('.dcl') ? filename : filename + '.dcl',
+                types: [{
+                    description: 'Arquivo de Diagrama',
+                    accept: { 'text/plain': ['.dcl'] }
+                }]
+            };
+            
+            // Tenta usar o último diretório salvo
+            const lastHandle = await window.mermaidInterop.readFromLocalStorage('lastDirectoryHandle');
+            if (lastHandle) {
+                options.startIn = lastHandle;
+            }
+            
+            const handle = await window.showSaveFilePicker(options);
+            const writable = await handle.createWritable();
+            await writable.write(content);
+            await writable.close();
+            
+            // Salva referência do diretório (não funciona diretamente, mas tenta)
+            try {
+                const dirHandle = await handle.getParent?.();
+                if (dirHandle) {
+                    await window.mermaidInterop.saveToLocalStorage('lastDirectoryHandle', dirHandle.name);
+                }
+            } catch (e) {
+                // Ignora erro ao salvar diretório
+            }
+            
+            return true;
+        } else {
+            // Fallback para navegadores antigos
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename.endsWith('.dcl') ? filename : filename + '.dcl';
+            a.click();
+            URL.revokeObjectURL(url);
+            return true;
+        }
+    } catch (e) {
+        if (e.name !== 'AbortError') {
+            console.error('Erro ao salvar arquivo:', e);
+            return false;
+        }
+        return false;
+    }
 };
 
-// Importar arquivo .dcl
-window.importDcl = () => {
-    return new Promise((resolve) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.dcl';
-        
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    resolve(event.target.result);
+// Abrir arquivo .dcl
+window.abrirArquivo = async () => {
+    try {
+        // Verifica se a API File System Access está disponível
+        if ('showOpenFilePicker' in window) {
+            const options = {
+                types: [{
+                    description: 'Arquivo de Diagrama',
+                    accept: { 'text/plain': ['.dcl'] }
+                }],
+                multiple: false
+            };
+            
+            const [handle] = await window.showOpenFilePicker(options);
+            const file = await handle.getFile();
+            const content = await file.text();
+            return content;
+        } else {
+            // Fallback para navegadores antigos
+            return new Promise((resolve) => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.dcl';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            resolve(event.target.result);
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        resolve(null);
+                    }
                 };
-                reader.readAsText(file);
-            } else {
-                resolve(null);
-            }
-        };
-        
-        input.click();
-    });
+                
+                input.click();
+            });
+        }
+    } catch (e) {
+        if (e.name !== 'AbortError') {
+            console.error('Erro ao abrir arquivo:', e);
+        }
+        return null;
+    }
 };
 

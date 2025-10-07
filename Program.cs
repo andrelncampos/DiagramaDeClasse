@@ -8,7 +8,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+builder.Services.AddScoped<HttpClient>();
 
 // Configuração completa do MudBlazor
 builder.Services.AddMudServices(config =>
@@ -26,5 +26,8 @@ builder.Services.AddMudServices(config =>
 // Registrando serviços da aplicação
 builder.Services.AddScoped<ServicoArmazenamentoBase, ServicoArmazenamentoLocal>();
 builder.Services.AddScoped<ServicoRenderizacaoMermaid>();
+builder.Services.AddScoped<ServicoCriptografia>();
+builder.Services.AddScoped<ServicoConfiguracaoIA>();
+builder.Services.AddScoped<ServicoIA>();
 
 await builder.Build().RunAsync();
