@@ -9,7 +9,9 @@
         // Detecta se está em GitHub Pages ou desenvolvimento local
         const isGitHubPages = window.location.hostname === 'andrelncampos.github.io';
         const baseHref = isGitHubPages ? '/DiagramaDeClasse/' : '/';
-        document.write('<base href="' + baseHref + '" />');
+        const base = document.createElement('base');
+        base.href = baseHref;
+        document.head.appendChild(base);
     </script>
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icon-192.png" />
